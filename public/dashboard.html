@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canara Bank Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e3f2fd;
+      color: #003366;
+    }
+
+    .navbar {
+      background-color: #1565c0;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+    }
+
+    .navbar h1 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      background-color: #0288d1;
+      padding: 10px 0;
+      justify-content: center;
+      gap: 40px;
+    }
+
+    .tab {
+      color: #fffde7;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 8px;
+      transition: background-color 0.3s;
+    }
+
+    .tab:hover,
+    .tab.active {
+      background-color: #fdd835;
+      color: #003366;
+    }
+
+    main {
+      padding: 40px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    section {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      border-bottom: 3px solid #fdd835;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    ul li, .service-card {
+      margin: 10px 0;
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .service-card {
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #fafafa;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <h1>CANARA BANK</h1>
+    <span>Welcome to Digital Banking</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="home">🏠 Home</div>
+    <div class="tab" data-tab="accounts">🧾 Accounts</div>
+    <div class="tab" data-tab="loans">💰 Loans</div>
+    <div class="tab" data-tab="cards">💳 Cards</div>
+    <div class="tab" data-tab="investments">📈 Investments</div>
+  </div>
+
+  <main id="tab-content">
+    <section>
+      <h2>Welcome to Canara Bank</h2>
+      <p>This is your secure online banking dashboard. Select any tab above to manage your services.</p>
+    </section>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll(".tab");
+    const content = document.getElementById("tab-content");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelector(".tab.active").classList.remove("active");
+        tab.classList.add("active");
+        loadTab(tab.dataset.tab);
+      });
+    });
+
+    function loadTab(tab) {
+      let html = "";
+      switch (tab) {
+        case "home":
+          html = `<section><h2>Welcome to Canara Bank</h2><p>This is your secure online banking dashboard. Select any tab above to manage your services.</p></section>`;
+          break;
+        case "accounts":
+          html = `
+            <section>
+              <h2>My Accounts</h2>
+              <div class="service-grid">
+                <div class="service-card"><strong>Savings Account</strong><br>A/C No: XXXX-XXXX-1234<br>IFSC: CNRB0001234<br>₹2,45,680.50</div>
+                <div class="service-card"><strong>Current Account</strong><br>A/C No: XXXX-XXXX-5678<br>IFSC: CNRB0005678<br>₹85,420.25</div>
+                <div class="service-card"><strong>Fixed Deposit</strong><br>FD No: FD123456789<br>Maturity: 15-Mar-2025<br>₹5,00,000.00</div>
+              </div>
+              <h3>Account Services</h3>
+              <div class="service-grid">
+                <div class="service-card">📄 Statement<br><small>Download statements</small></div>
+                <div class="service-card">🔐 Block/Unblock<br><small>Manage access</small></div>
+                <div class="service-card">📞 Update Details<br><small>Contact info</small></div>
+                <div class="service-card">➕ Open Account<br><small>Apply online</small></div>
+              </div>
+            </section>
+          `;
+          break;
+        case "loans":
+          html = `
+            <section>
+              <h2>Available Loans</h2>
+              <ul>
+                <li><strong>🏠 Home Loan</strong> – 8.5% p.a. – Up to ₹75L – <button>Apply Now</button></li>
+                <li><strong>🎓 Education Loan</strong> – 9.25% p.a. – Up to ₹10L – <button>Apply</button></li>
+                <li><strong>🚗 Car Loan</strong> – 10% p.a. – Up to ₹20L – <button>Apply</button></li>
+              </ul>
+            </section>
+          `;
+          break;
+        case "cards":
+          html = `
+            <section>
+              <h2>My Cards</h2>
+              <div class="service-card">
+                <strong>CANARA BANK DEBIT CARD</strong><br>
+                **** **** **** 1234<br>
+                Holder: Rajesh Kumar<br>
+                Valid Thru: 12/26
+              </div>
+              <h3>Card Services</h3>
+              <div class="service-grid">
+                <div class="service-card">🛑 Block Card</div>
+                <div class="service-card">🔐 Generate PIN</div>
+                <div class="service-card">📄 Card Statement</div>
+                <div class="service-card">💳 Apply for Credit Card</div>
+              </div>
+            </section>
+          `;
+          break;
+        case "investments":
+          html = `
+            <section>
+              <h2>Investment Options</h2>
+              <div class="service-grid">
+                <div class="service-card" style="background:#00c853;color:#fff;">
+                  <strong>Fixed Deposit</strong><br>
+                  7.5% p.a.<br>
+                  <small>Minimum ₹1,000, flexible tenure</small><br>
+                  <button>Invest Now</button>
+                </div>
+                <div class="service-card" style="background:#aa00ff;color:#fff;">
+                  <strong>Recurring Deposit</strong><br>
+                  7.25% p.a.<br>
+                  <small>Monthly savings option</small><br>
+                  <button>Start Now</button>
+                </div>
+              </div>
+              <h3>Tools</h3>
+              <ul>
+                <li>📊 SIP Calculator</li>
+                <li>📈 Market Watch</li>
+                <li>💡 Investment Tips</li>
+              </ul>
+            </section>
+          `;
+          break;
+      }
+      content.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
