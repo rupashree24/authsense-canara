@@ -1,0 +1,29 @@
+2025-07-20 18:03:41,675 - behavioral_auth - INFO - Training global autoencoder...
+2025-07-20 18:03:46,313 - behavioral_auth - INFO - Autoencoder Epoch 0, Loss: 1.1045
+2025-07-20 18:03:46,525 - behavioral_auth - INFO - Autoencoder Epoch 20, Loss: 1.0660
+2025-07-20 18:03:46,691 - behavioral_auth - INFO - Autoencoder Epoch 40, Loss: 1.0404
+2025-07-20 18:03:46,854 - behavioral_auth - INFO - Autoencoder Epoch 60, Loss: 1.0223
+2025-07-20 18:03:47,020 - behavioral_auth - INFO - Autoencoder Epoch 80, Loss: 1.0059
+2025-07-20 18:03:47,190 - behavioral_auth - INFO - Autoencoder Epoch 100, Loss: 0.9883
+2025-07-20 18:03:47,359 - behavioral_auth - INFO - Autoencoder Epoch 120, Loss: 0.9483
+2025-07-20 18:03:47,531 - behavioral_auth - INFO - Autoencoder Epoch 140, Loss: 0.8877
+2025-07-20 18:03:47,612 - behavioral_auth - INFO - Training global classifier...
+2025-07-20 18:03:47,665 - behavioral_auth - INFO - Classifier Epoch 0, Loss: 0.7664, Val Acc: 0.2000
+2025-07-20 18:03:47,823 - behavioral_auth - INFO - Classifier Epoch 20, Loss: 0.7035, Val Acc: 0.4325
+2025-07-20 18:03:47,964 - behavioral_auth - INFO - Classifier Epoch 40, Loss: 0.6412, Val Acc: 0.8575
+2025-07-20 18:03:48,108 - behavioral_auth - INFO - Classifier Epoch 60, Loss: 0.5758, Val Acc: 0.9375
+2025-07-20 18:03:48,256 - behavioral_auth - INFO - Classifier Epoch 80, Loss: 0.5267, Val Acc: 0.9658
+2025-07-20 18:03:48,426 - behavioral_auth - INFO - Classifier Epoch 100, Loss: 0.4804, Val Acc: 0.9767
+2025-07-20 18:03:48,592 - behavioral_auth - INFO - Classifier Epoch 120, Loss: 0.4486, Val Acc: 0.9825
+2025-07-20 18:03:48,744 - behavioral_auth - INFO - Classifier Epoch 140, Loss: 0.4220, Val Acc: 0.9858
+2025-07-20 18:03:48,839 - behavioral_auth - INFO - Created personalized model for user 0
+2025-07-20 18:03:48,849 - behavioral_auth - INFO - Created personalized model for user 1
+2025-07-20 18:03:48,859 - behavioral_auth - INFO - Created personalized model for user 2
+2025-07-20 18:03:48,867 - behavioral_auth - INFO - Created personalized model for user 3
+2025-07-20 18:03:48,876 - behavioral_auth - INFO - Created personalized model for user 4
+2025-07-20 18:03:48,885 - behavioral_auth - INFO - Created personalized model for user 5
+2025-07-20 18:03:48,895 - behavioral_auth - INFO - Created personalized model for user 6
+2025-07-20 18:03:48,904 - behavioral_auth - INFO - Created personalized model for user 7
+2025-07-20 18:03:48,913 - behavioral_auth - INFO - Created personalized model for user 8
+2025-07-20 18:03:48,921 - behavioral_auth - INFO - Created personalized model for user 9
+2025-07-20 18:03:49,034 - behavioral_auth - INFO - All models saved successfully

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuthSense Desktop - Behavioral Authentication</title>
-    <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuthSense Desktop - Behavioral Authentication</title>
+  <style>
         :root {
             --primary-bg: #e1f5fe;
             --secondary-bg: #fffde7;
@@ -292,185 +292,76 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>🏦 AuthSense Desktop Banking</h2>
-        <div class="auth-status">
-            <div class="status-indicator status-secure" id="authStatus"></div>
-            <span id="authText">Secure Session</span>
-            <span id="riskScore">Risk: 0%</span>
-        </div>
+  <div class="header">
+    <h2>🏦 AuthSense Desktop Banking</h2>
+    <div class="auth-status">
+      <div class="status-indicator status-secure" id="authStatus"></div>
+      <span id="authText">Secure Session</span>
+      <span id="riskScore">Risk: 0%</span>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- Left Panel - Behavioral Metrics -->
+    <div class="panel behavioral-panel">
+      <h3>🧠 Behavioral Analytics</h3>
+      <div class="metric"><span>Keystroke Rhythm</span><span class="metric-value normal" id="keystroke">Normal</span></div>
+      <div class="metric"><span>Mouse Patterns</span><span class="metric-value normal" id="mouse">Normal</span></div>
+      <div class="metric"><span>Typing Speed</span><span class="metric-value normal" id="typingSpeed">85 WPM</span></div>
+      <div class="metric"><span>Click Pressure</span><span class="metric-value normal" id="clickPressure">Normal</span></div>
+      <div class="metric"><span>Scroll Behavior</span><span class="metric-value normal" id="scrollBehavior">Consistent</span></div>
+      <div class="metric"><span>Navigation Pattern</span><span class="metric-value normal" id="navPattern">Expected</span></div>
+      <div class="metric"><span>Session Duration</span><span class="metric-value normal" id="sessionTime">00:00</span></div>
+      <div class="ml-insights">
+        <h4>🤖 AI Confidence</h4>
+        <div>User Identity: <span id="aiConfidence">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+        <small>LSTM + Autoencoder Model</small>
+      </div>
+      <div class="threat-level threat-low" id="threatLevel">
+        <span>🛡️</span>
+        <div><strong>Threat Level: LOW</strong><div><small>All systems normal</small></div></div>
+      </div>
     </div>
 
-    <div class="main-container">
-        <!-- Left Panel - Behavioral Metrics -->
-        <div class="panel behavioral-panel">
-            <h3>🧠 Behavioral Analytics</h3>
-            
-            <div class="metric">
-                <span>Keystroke Rhythm</span>
-                <span class="metric-value normal" id="keystroke">Normal</span>
-            </div>
-            
-            <div class="metric">
-                <span>Mouse Patterns</span>
-                <span class="metric-value normal" id="mouse">Normal</span>
-            </div>
-            
-            <div class="metric">
-                <span>Typing Speed</span>
-                <span class="metric-value normal" id="typingSpeed">85 WPM</span>
-            </div>
-            
-            <div class="metric">
-                <span>Click Pressure</span>
-                <span class="metric-value normal" id="clickPressure">Normal</span>
-            </div>
-            
-            <div class="metric">
-                <span>Scroll Behavior</span>
-                <span class="metric-value normal" id="scrollBehavior">Consistent</span>
-            </div>
-            
-            <div class="metric">
-                <span>Navigation Pattern</span>
-                <span class="metric-value normal" id="navPattern">Expected</span>
-            </div>
-
-            <div class="metric">
-                <span>Session Duration</span>
-                <span class="metric-value normal" id="sessionTime">12:34</span>
-            </div>
-
-            <div class="ml-insights">
-                <h4>🤖 AI Confidence</h4>
-                <div>User Identity: <span id="aiConfidence">94.2%</span></div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 94.2%"></div>
-                </div>
-                <small>LSTM + Autoencoder Model</small>
-            </div>
-
-            <div class="threat-level threat-low" id="threatLevel">
-                <span>🛡️</span>
-                <div>
-                    <strong>Threat Level: LOW</strong>
-                    <div><small>All systems normal</small></div>
-                </div>
-            </div>
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <h2>Welcome to Secure Banking</h2>
+      <div class="honeypot-alert" id="honeypotAlert">
+        🚨 SECURITY ALERT: Unusual activity detected. Activating protective measures...
+      </div>
+      <div>
+        <h3>🔍 Behavioral Analysis Test Area</h3>
+        <p>Type, click, and interact below to see real-time behavioral analysis:</p>
+        <div class="test-area" contenteditable="true" id="testArea">
+          Type something here to test keystroke dynamics and behavioral patterns...
         </div>
-
-        <!-- Main Content Area -->
-        <div class="main-content">
-            <h2>Welcome to Secure Banking</h2>
-            
-            <!-- Accessibility Controls -->
-            <div class="accessibility-controls">
-                <h4>♿ Accessibility & Testing Controls</h4>
-                <div class="control-group">
-                    <button class="btn btn-small" onclick="toggleHighContrast()">High Contrast</button>
-                    <button class="btn btn-small" onclick="increaseFontSize()">Font Size +</button>
-                    <button class="btn btn-small" onclick="decreaseFontSize()">Font Size -</button>
-                    <button class="btn btn-small" onclick="enableScreenReader()">Screen Reader</button>
-                </div>
-                <div class="control-group">
-                    <button class="btn btn-small" onclick="simulateElderlyUser()">Simulate Elderly User</button>
-                    <button class="btn btn-small" onclick="simulateDisabilityMode()">Disability Mode</button>
-                    <button class="btn btn-small" onclick="testDuressGesture()">Test Duress Alert</button>
-                </div>
-            </div>
-
-            <div class="honeypot-alert" id="honeypotAlert">
-                🚨 SECURITY ALERT: Unusual activity detected. Activating protective measures...
-            </div>
-
-            <!-- Interactive Test Area -->
-            <div>
-                <h3>🔍 Behavioral Analysis Test Area</h3>
-                <p>Type, click, and interact below to see real-time behavioral analysis:</p>
-                <div class="test-area" contenteditable="true" id="testArea" 
-                     placeholder="Start typing to analyze your keystroke patterns...">
-                    Type something here to test keystroke dynamics and behavioral patterns...
-                </div>
-            </div>
-
-            <!-- Banking Services -->
-            <div class="banking-interface">
-                <div class="service-card" onclick="accessAccount()">
-                    <h4>💰 Account Balance</h4>
-                    <p>₹2,45,680.50</p>
-                    <small>Savings Account</small>
-                </div>
-
-                <div class="service-card" onclick="transferFunds()">
-                    <h4>💸 Transfer Funds</h4>
-                    <p>Quick & Secure</p>
-                    <small>To any account</small>
-                </div>
-
-                <div class="service-card" onclick="viewStatements()">
-                    <h4>📊 Statements</h4>
-                    <p>Download</p>
-                    <small>Last 6 months</small>
-                </div>
-
-                <div class="service-card" onclick="payBills()">
-                    <h4>💡 Pay Bills</h4>
-                    <p>Utilities & More</p>
-                    <small>One-click payments</small>
-                </div>
-
-                <div class="service-card" onclick="investments()">
-                    <h4>📈 Investments</h4>
-                    <p>Portfolio View</p>
-                    <small>Mutual funds & FDs</small>
-                </div>
-
-                <div class="service-card" onclick="loans()">
-                    <h4>🏠 Loans</h4>
-                    <p>Apply Online</p>
-                    <small>Pre-approved offers</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Panel - System Logs -->
-        <div class="panel">
-            <h3>📋 Security Logs</h3>
-            <div class="log-display" id="securityLogs">
-[12:34:56] Session initiated
-[12:34:57] Behavioral baseline established
-[12:35:02] Keystroke pattern: NORMAL
-[12:35:05] Mouse movement: CONSISTENT
-[12:35:08] AI confidence: 94.2%
-[12:35:12] All systems secure
-            </div>
-
-            <h3 style="margin-top: 20px;">⚙️ Model Settings</h3>
-            <div class="control-group">
-                <button class="btn btn-small" onclick="adjustSensitivity('low')">Low Sensitivity</button>
-                <button class="btn btn-small" onclick="adjustSensitivity('medium')">Medium</button>
-                <button class="btn btn-small" onclick="adjustSensitivity('high')">High Sensitivity</button>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <label>Anomaly Threshold:</label>
-                <input type="range" min="0.1" max="0.9" step="0.1" value="0.3" id="thresholdSlider" 
-                       onchange="updateThreshold(this.value)" style="width: 100%; margin: 5px 0;">
-                <small>Current: <span id="thresholdValue">0.3</span></small>
-            </div>
-
-            <h3 style="margin-top: 20px;">🎯 Honeypot Controls</h3>
-            <button class="btn" onclick="activateHoneypot()" style="background: #ff5722; color: white; width: 100%;">
-                Activate Honeypot Mode
-            </button>
-        </div>
+      </div>
+      <div class="banking-interface">
+        <div class="service-card"><h4>💰 Account Balance</h4><p>₹2,45,680.50</p></div>
+        <div class="service-card"><h4>💸 Transfer Funds</h4><p>Quick & Secure</p></div>
+        <div class="service-card"><h4>📊 Statements</h4><p>Download</p></div>
+        <div class="service-card"><h4>💡 Pay Bills</h4><p>Utilities & More</p></div>
+        <div class="service-card"><h4>📈 Investments</h4><p>Portfolio View</p></div>
+        <div class="service-card"><h4>🏠 Loans</h4><p>Apply Online</p></div>
+      </div>
     </div>
 
-    <div class="contextual-help" onclick="showHelp()">?</div>
+    <!-- Right Panel - System Logs -->
+    <div class="panel">
+      <h3>📋 Security Logs</h3>
+      <div class="log-display" id="securityLogs">
+        [00:00:00] System ready
+      </div>
+    </div>
+  </div>
 
-    <script>
-        // Behavioral Authentication System
-        // Enhanced Behavioral Authentication with ML Integration
+  <script>
+    // === Insert AuthSenseML Class Here ===
+    // Paste your full AuthSenseML class code below:
+    // <PASTE AuthSenseML CLASS FROM USER CODE HERE>
+
+    // Enhanced Behavioral Authentication with ML Integration
         class AuthSenseML {
             constructor() {
                 this.API_BASE = 'http://localhost:5000';
@@ -840,6 +731,7 @@
                 authSenseML.endSession();
             }
         });
+
     </script>
 </body>
 </html>

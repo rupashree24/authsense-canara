@@ -1,0 +1,39 @@
+2025-07-20 18:07:34,852 - behavioral_auth - INFO - Training global autoencoder...
+2025-07-20 18:07:37,662 - behavioral_auth - INFO - Autoencoder Epoch 0, Loss: 1.0425
+2025-07-20 18:07:37,865 - behavioral_auth - INFO - Autoencoder Epoch 20, Loss: 1.0339
+2025-07-20 18:07:38,052 - behavioral_auth - INFO - Autoencoder Epoch 40, Loss: 1.0261
+2025-07-20 18:07:38,323 - behavioral_auth - INFO - Autoencoder Epoch 60, Loss: 1.0199
+2025-07-20 18:07:38,495 - behavioral_auth - INFO - Autoencoder Epoch 80, Loss: 1.0139
+2025-07-20 18:07:38,672 - behavioral_auth - INFO - Autoencoder Epoch 100, Loss: 1.0082
+2025-07-20 18:07:38,845 - behavioral_auth - INFO - Autoencoder Epoch 120, Loss: 0.9834
+2025-07-20 18:07:39,011 - behavioral_auth - INFO - Autoencoder Epoch 140, Loss: 0.9352
+2025-07-20 18:07:39,093 - behavioral_auth - INFO - Training global classifier...
+2025-07-20 18:07:39,105 - behavioral_auth - INFO - Classifier Epoch 0, Loss: 0.6712, Val Acc: 0.2000
+2025-07-20 18:07:39,268 - behavioral_auth - INFO - Classifier Epoch 20, Loss: 0.6241, Val Acc: 0.8533
+2025-07-20 18:07:39,444 - behavioral_auth - INFO - Classifier Epoch 40, Loss: 0.5844, Val Acc: 0.9400
+2025-07-20 18:07:39,603 - behavioral_auth - INFO - Classifier Epoch 60, Loss: 0.5419, Val Acc: 0.9483
+2025-07-20 18:07:39,775 - behavioral_auth - INFO - Classifier Epoch 80, Loss: 0.5053, Val Acc: 0.9583
+2025-07-20 18:07:39,925 - behavioral_auth - INFO - Classifier Epoch 100, Loss: 0.4721, Val Acc: 0.9683
+2025-07-20 18:07:40,094 - behavioral_auth - INFO - Classifier Epoch 120, Loss: 0.4450, Val Acc: 0.9742
+2025-07-20 18:07:40,256 - behavioral_auth - INFO - Classifier Epoch 140, Loss: 0.4193, Val Acc: 0.9775
+2025-07-20 18:07:40,340 - behavioral_auth - INFO - Created personalized model for user 0
+2025-07-20 18:07:40,347 - behavioral_auth - INFO - Created personalized model for user 1
+2025-07-20 18:07:40,353 - behavioral_auth - INFO - Created personalized model for user 2
+2025-07-20 18:07:40,362 - behavioral_auth - INFO - Created personalized model for user 3
+2025-07-20 18:07:40,369 - behavioral_auth - INFO - Created personalized model for user 4
+2025-07-20 18:07:40,377 - behavioral_auth - INFO - Created personalized model for user 5
+2025-07-20 18:07:40,384 - behavioral_auth - INFO - Created personalized model for user 6
+2025-07-20 18:07:40,393 - behavioral_auth - INFO - Created personalized model for user 7
+2025-07-20 18:07:40,400 - behavioral_auth - INFO - Created personalized model for user 8
+2025-07-20 18:07:40,408 - behavioral_auth - INFO - Created personalized model for user 9
+2025-07-20 18:07:40,514 - behavioral_auth - INFO - All models saved successfully
+2025-07-20 18:07:42,992 - __main__ - INFO -    Accuracy:  0.976
+2025-07-20 18:07:42,992 - __main__ - INFO -    Precision: 0.974
+2025-07-20 18:07:42,993 - __main__ - INFO -    Recall:    0.997
+2025-07-20 18:07:42,993 - __main__ - INFO -    F1-Score:  0.985
+2025-07-20 18:07:42,994 - __main__ - INFO -    AUC-ROC:   0.981
+2025-07-20 18:07:45,719 - __main__ - INFO -    - Total samples: 7500
+2025-07-20 18:07:45,721 - __main__ - INFO -    - Unique users: 25
+2025-07-20 18:07:45,723 - __main__ - INFO -    - Training epochs: 150
+2025-07-20 18:07:45,724 - __main__ - INFO -    - Personalized models: 10
+2025-07-20 18:07:45,725 - __main__ - INFO -    - Models saved to: model
