@@ -470,955 +470,375 @@
 
     <script>
         // Behavioral Authentication System
-        class DesktopAuthSense {
+        // Enhanced Behavioral Authentication with ML Integration
+        class AuthSenseML {
             constructor() {
-                this.sessionData = {
-                    startTime: Date.now(),
-                    keystrokePatterns: [],
+                this.API_BASE = 'http://localhost:5000';
+                this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                this.isActive = false;
+                this.analysisInterval = null;
+                this.behaviorData = {
+                    keystrokes: [],
                     mouseMovements: [],
-                    clickPatterns: [],
-                    scrollBehavior: [],
-                    typingSpeed: [],
-                    sessionEvents: []
+                    clicks: [],
+                    scrolls: []
                 };
-                
-                this.userProfile = {
-                    avgTypingSpeed: 85,
-                    avgKeyInterval: 150,
-                    mouseAcceleration: 0.8,
-                    clickPressure: 'normal',
-                    preferredPaths: []
+                this.currentMetrics = {
+                    avgKeystrokeInterval: 150,
+                    mouseVelocity: 0,
+                    clickFrequency: 0,
+                    scrollPattern: 0.5,
+                    navigationFlow: 0.8,
+                    sessionDuration: 0
                 };
-                
-                this.mlModel = {
-                    confidence: 94.2,
-                    anomalyThreshold: 0.3,
-                    riskScore: 0,
-                    isHoneypotActive: false
-                };
-
-                this.accessibilityMode = {
-                    highContrast: false,
-                    largerFont: false,
-                    elderlyMode: false,
-                    disabilityMode: false
-                };
-
+                this.startTime = Date.now();
                 this.init();
             }
 
-            init() {
-                this.setupEventListeners();
-                this.startSessionTimer();
-                this.beginBehavioralAnalysis();
+            async init() {
+                try {
+                    // Start session with backend
+                    const response = await fetch(`${this.API_BASE}/session/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            session_id: this.sessionId,
+                            user_profile: { avgTypingSpeed: 85, mouseAcceleration: 0.8 }
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        this.isActive = true;
+                        this.setupEventListeners();
+                        this.startContinuousAnalysis();
+                        this.logEvent(`✅ Session started: ${this.sessionId}`);
+                    } else {
+                        throw new Error('Failed to start session');
+                    }
+                } catch (error) {
+                    this.logEvent(`❌ Initialization error: ${error.message}`);
+                    this.fallbackMode();
+                }
             }
 
             setupEventListeners() {
-                // Keystroke Analysis
-                document.addEventListener('keydown', (e) => this.analyzeKeystroke(e));
-                document.addEventListener('keyup', (e) => this.analyzeKeyRelease(e));
+                // Keystroke tracking
+                document.addEventListener('keydown', (e) => this.trackKeystroke(e));
                 
-                // Mouse Behavior
-                document.addEventListener('mousemove', (e) => this.analyzeMouseMovement(e));
-                document.addEventListener('click', (e) => this.analyzeClick(e));
-                document.addEventListener('wheel', (e) => this.analyzeScroll(e));
+                // Mouse tracking  
+                document.addEventListener('mousemove', (e) => this.trackMouse(e));
+                document.addEventListener('click', (e) => this.trackClick(e));
+                document.addEventListener('wheel', (e) => this.trackScroll(e));
                 
-                // Focus and Navigation
-                document.addEventListener('focusin', (e) => this.analyzeNavigation(e));
-                window.addEventListener('beforeunload', () => this.finalizeSession());
-                
-                // Accessibility shortcuts
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.altKey && e.key === 'h') this.enableAccessibilityMode();
-                    if (e.ctrlKey && e.shiftKey && e.key === 'D') this.triggerDuressAlert();
-                });
+                // Session cleanup
+                window.addEventListener('beforeunload', () => this.endSession());
             }
 
-            analyzeKeystroke(event) {
-                const timestamp = performance.now();
-                const keyData = {
+            trackKeystroke(event) {
+                const now = performance.now();
+                this.behaviorData.keystrokes.push({
+                    timestamp: now,
                     key: event.key,
-                    timestamp: timestamp,
-                    ctrlKey: event.ctrlKey,
-                    shiftKey: event.shiftKey,
-                    altKey: event.altKey
-                };
-
-                this.sessionData.keystrokePatterns.push(keyData);
+                    interval: this.behaviorData.keystrokes.length > 0 ? 
+                        now - this.behaviorData.keystrokes[this.behaviorData.keystrokes.length - 1].timestamp : 0
+                });
                 
-                // Calculate typing metrics
-                if (this.sessionData.keystrokePatterns.length > 1) {
-                    const interval = timestamp - this.sessionData.keystrokePatterns[this.sessionData.keystrokePatterns.length - 2].timestamp;
-                    this.sessionData.typingSpeed.push(interval);
-                    
-                    // Real-time analysis
-                    this.performRealTimeAnalysis();
+                // Keep last 50 keystrokes
+                if (this.behaviorData.keystrokes.length > 50) {
+                    this.behaviorData.keystrokes.shift();
                 }
-
-                this.logEvent(`Keystroke: ${event.key} | Interval: ${this.getLastTypingInterval()}ms`);
+                
+                this.updateMetrics();
             }
 
-            analyzeKeyRelease(event) {
-                // Analyze dwell time (key press duration)
-                const dwellTime = performance.now() - (this.lastKeyDown || performance.now());
-                this.sessionData.keystrokePatterns[this.sessionData.keystrokePatterns.length - 1].dwellTime = dwellTime;
-            }
-
-            analyzeMouseMovement(event) {
-                const timestamp = performance.now();
-                const mouseData = {
+            trackMouse(event) {
+                const now = performance.now();
+                const lastMove = this.behaviorData.mouseMovements[this.behaviorData.mouseMovements.length - 1];
+                
+                let velocity = 0;
+                if (lastMove) {
+                    const distance = Math.sqrt(
+                        Math.pow(event.clientX - lastMove.x, 2) + 
+                        Math.pow(event.clientY - lastMove.y, 2)
+                    );
+                    const timeInterval = now - lastMove.timestamp;
+                    velocity = timeInterval > 0 ? distance / timeInterval : 0;
+                }
+                
+                this.behaviorData.mouseMovements.push({
                     x: event.clientX,
                     y: event.clientY,
-                    timestamp: timestamp,
-                    movementX: event.movementX,
-                    movementY: event.movementY
-                };
-
-                this.sessionData.mouseMovements.push(mouseData);
+                    timestamp: now,
+                    velocity: velocity
+                });
                 
-                // Calculate velocity and acceleration
-                if (this.sessionData.mouseMovements.length > 2) {
-                    const velocity = this.calculateMouseVelocity();
-                    const acceleration = this.calculateMouseAcceleration();
-                    
-                    if (Math.abs(acceleration) > 2.0) {
-                        this.flagSuspiciousActivity('unusual_mouse_acceleration', acceleration);
-                    }
+                // Keep last 100 movements
+                if (this.behaviorData.mouseMovements.length > 100) {
+                    this.behaviorData.mouseMovements.shift();
                 }
+                
+                this.updateMetrics();
             }
 
-            analyzeClick(event) {
-                const clickData = {
+            trackClick(event) {
+                this.behaviorData.clicks.push({
                     x: event.clientX,
                     y: event.clientY,
-                    button: event.button,
                     timestamp: performance.now(),
-                    pressure: event.pressure || 0.5, // For devices that support pressure
-                    target: event.target.tagName
-                };
-
-                this.sessionData.clickPatterns.push(clickData);
+                    button: event.button
+                });
                 
-                // Analyze click patterns
-                if (this.sessionData.clickPatterns.length > 5) {
-                    const pattern = this.analyzeClickPattern();
-                    if (pattern.isAnomalous) {
-                        this.flagSuspiciousActivity('unusual_click_pattern', pattern);
-                    }
+                // Keep last 20 clicks
+                if (this.behaviorData.clicks.length > 20) {
+                    this.behaviorData.clicks.shift();
                 }
-
-                this.logEvent(`Click detected: ${event.target.tagName} at (${event.clientX}, ${event.clientY})`);
+                
+                this.updateMetrics();
             }
 
-            analyzeScroll(event) {
-                const scrollData = {
+            trackScroll(event) {
+                this.behaviorData.scrolls.push({
                     deltaX: event.deltaX,
                     deltaY: event.deltaY,
                     timestamp: performance.now()
-                };
-
-                this.sessionData.scrollBehavior.push(scrollData);
-                this.updateUI('scrollBehavior', this.getScrollPattern());
+                });
+                
+                // Keep last 30 scrolls
+                if (this.behaviorData.scrolls.length > 30) {
+                    this.behaviorData.scrolls.shift();
+                }
+                
+                this.updateMetrics();
             }
 
-            performRealTimeAnalysis() {
-                // LSTM-like pattern analysis
-                const recentKeystrokes = this.sessionData.keystrokePatterns.slice(-20);
-                const typingRhythm = this.analyzeTypingRhythm(recentKeystrokes);
+            updateMetrics() {
+                // Calculate average keystroke interval
+                if (this.behaviorData.keystrokes.length >= 2) {
+                    const intervals = this.behaviorData.keystrokes
+                        .slice(-10)
+                        .map(k => k.interval)
+                        .filter(i => i > 0);
+                    this.currentMetrics.avgKeystrokeInterval = intervals.length > 0 ? 
+                        intervals.reduce((a, b) => a + b, 0) / intervals.length : 150;
+                }
                 
-                this.updateUI('keystroke', typingRhythm.status);
-                this.updateUI('typingSpeed', `${typingRhythm.wpm} WPM`);
+                // Calculate mouse velocity
+                if (this.behaviorData.mouseMovements.length >= 2) {
+                    const velocities = this.behaviorData.mouseMovements
+                        .slice(-10)
+                        .map(m => m.velocity);
+                    this.currentMetrics.mouseVelocity = velocities.length > 0 ?
+                        velocities.reduce((a, b) => a + b, 0) / velocities.length : 0;
+                }
+                
+                // Calculate click frequency
+                this.currentMetrics.sessionDuration = (Date.now() - this.startTime) / 1000;
+                this.currentMetrics.clickFrequency = this.currentMetrics.sessionDuration > 0 ?
+                    this.behaviorData.clicks.length / this.currentMetrics.sessionDuration : 0;
+                
+                // Calculate scroll pattern
+                if (this.behaviorData.scrolls.length > 0) {
+                    const avgScroll = this.behaviorData.scrolls
+                        .map(s => Math.abs(s.deltaY))
+                        .reduce((a, b) => a + b, 0) / this.behaviorData.scrolls.length;
+                    this.currentMetrics.scrollPattern = Math.min(1, avgScroll / 100);
+                }
+                
+                // Navigation flow (simplified)
+                this.currentMetrics.navigationFlow = 0.8; // Default value
+            }
 
-                // Prepare behavior vector to send to real ML backend
-                const behaviorVector = {
-                    avgKeystrokeInterval: this.getAverageKeystrokeInterval(),
-                    mouseVelocity: this.getAverageMouseVelocity(),
-                    clickFrequency: this.getClickFrequency(),
-                    scrollPattern: this.getScrollPattern(),
-                    navigationFlow: this.getNavigationFlow(),
-                    sessionDuration: (Date.now() - this.sessionData.startTime) / 1000
-                };
-
-                fetch('http://localhost:5000/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(behaviorVector)
-                })
-                .then(res => res.json())
-                .then(data => {
-                    this.mlModel.confidence = data.confidence;
-                    this.mlModel.riskScore = data.risk_score;
-                    this.updateRiskLevel();
-
-                    if (data.hijack_detected && !this.mlModel.isHoneypotActive) {
-                        this.activateHoneypot();
+            async analyzeWithML() {
+                if (!this.isActive) return;
+                
+                try {
+                    const response = await fetch(`${this.API_BASE}/analyze`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: this.sessionId,
+                            ...this.currentMetrics
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        this.processAnalysisResult(result);
+                    } else {
+                        throw new Error(`Analysis failed: ${response.status}`);
                     }
-                });
+                } catch (error) {
+                    this.logEvent(`❌ Analysis error: ${error.message}`);
+                }
             }
 
-
-            analyzeTypingRhythm(keystrokes) {
-                if (keystrokes.length < 5) return { status: 'learning', wpm: 85 };
+            processAnalysisResult(result) {
+                // Update UI with ML results
+                this.updateRiskIndicator(result.risk_score);
+                this.updateConfidenceIndicator(result.confidence);
                 
-                const intervals = [];
-                for (let i = 1; i < keystrokes.length; i++) {
-                    intervals.push(keystrokes[i].timestamp - keystrokes[i-1].timestamp);
+                // Handle hijack detection
+                if (result.hijack_detected) {
+                    this.handleHijackDetection(result);
                 }
                 
-                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                const deviation = this.calculateStandardDeviation(intervals);
-                const wpm = Math.round(60000 / (avgInterval * 5)); // Approximate WPM
-                
-                let status = 'normal';
-                if (Math.abs(avgInterval - this.userProfile.avgKeyInterval) > 50) {
-                    status = 'suspicious';
-                }
-                if (deviation > 100) {
-                    status = 'anomaly';
-                }
-                
-                return { status, wpm, avgInterval, deviation };
-            }
-
-            calculateAnomalyScore() {
-                let score = 0;
-                
-                // Typing pattern analysis
-                if (this.sessionData.typingSpeed.length > 10) {
-                    const recentSpeed = this.sessionData.typingSpeed.slice(-10);
-                    const avgSpeed = recentSpeed.reduce((a, b) => a + b, 0) / recentSpeed.length;
-                    const deviation = Math.abs(avgSpeed - this.userProfile.avgKeyInterval);
-                    score += Math.min(0.3, deviation / 200);
-                }
-                
-                // Mouse movement analysis
-                if (this.sessionData.mouseMovements.length > 20) {
-                    const recentMouse = this.sessionData.mouseMovements.slice(-20);
-                    const jerkiness = this.calculateMouseJerkiness(recentMouse);
-                    score += Math.min(0.3, jerkiness / 10);
-                }
-                
-                // Navigation pattern analysis
-                const navAnomalyScore = this.analyzeNavigationPattern();
-                score += navAnomalyScore * 0.4;
-                
-                return Math.min(1.0, score);
-            }
-
-            calculateMouseVelocity() {
-                if (this.sessionData.mouseMovements.length < 2) return 0;
-                
-                const current = this.sessionData.mouseMovements[this.sessionData.mouseMovements.length - 1];
-                const previous = this.sessionData.mouseMovements[this.sessionData.mouseMovements.length - 2];
-                
-                const distance = Math.sqrt(
-                    Math.pow(current.x - previous.x, 2) + 
-                    Math.pow(current.y - previous.y, 2)
+                // Log results
+                this.logEvent(
+                    `🤖 ML Analysis - Risk: ${result.risk_score.toFixed(1)}%, ` +
+                    `Confidence: ${result.confidence.toFixed(1)}%, ` +
+                    `Hijack: ${result.hijack_detected ? 'YES' : 'NO'}`
                 );
-                const timeInterval = current.timestamp - previous.timestamp;
                 
-                return distance / timeInterval;
+                // Update metrics display
+                document.getElementById('aiConfidence').textContent = `${result.confidence.toFixed(1)}%`;
+                document.getElementById('riskScore').textContent = `Risk: ${Math.round(result.risk_score)}%`;
             }
 
-            calculateMouseAcceleration() {
-                if (this.sessionData.mouseMovements.length < 3) return 0;
-                
-                const velocities = [];
-                for (let i = this.sessionData.mouseMovements.length - 3; i < this.sessionData.mouseMovements.length - 1; i++) {
-                    const current = this.sessionData.mouseMovements[i + 1];
-                    const previous = this.sessionData.mouseMovements[i];
-                    const distance = Math.sqrt(
-                        Math.pow(current.x - previous.x, 2) + 
-                        Math.pow(current.y - previous.y, 2)
-                    );
-                    const timeInterval = current.timestamp - previous.timestamp;
-                    velocities.push(distance / timeInterval);
-                }
-                
-                return (velocities[1] - velocities[0]) / 16.67; // Assuming ~60fps
-            }
-
-            analyzeClickPattern() {
-                const recentClicks = this.sessionData.clickPatterns.slice(-5);
-                let anomalyScore = 0;
-                
-                // Check for rapid clicking
-                for (let i = 1; i < recentClicks.length; i++) {
-                    const interval = recentClicks[i].timestamp - recentClicks[i-1].timestamp;
-                    if (interval < 100) anomalyScore += 0.2; // Too fast
-                    if (interval > 5000) anomalyScore += 0.1; // Too slow
-                }
-                
-                // Check for click location patterns
-                const distances = [];
-                for (let i = 1; i < recentClicks.length; i++) {
-                    const distance = Math.sqrt(
-                        Math.pow(recentClicks[i].x - recentClicks[i-1].x, 2) +
-                        Math.pow(recentClicks[i].y - recentClicks[i-1].y, 2)
-                    );
-                    distances.push(distance);
-                }
-                
-                const avgDistance = distances.reduce((a, b) => a + b, 0) / distances.length;
-                if (avgDistance > 500) anomalyScore += 0.3; // Erratic clicking
-                
-                return {
-                    isAnomalous: anomalyScore > 0.3,
-                    score: anomalyScore,
-                    pattern: 'click_analysis'
-                };
-            }
-
-            flagSuspiciousActivity(type, data) {
-                const alert = {
-                    type: type,
-                    timestamp: Date.now(),
-                    data: data,
-                    severity: this.calculateSeverity(type, data)
-                };
-                
-                this.sessionData.sessionEvents.push(alert);
-                this.logEvent(`🚨 ALERT: ${type} - Severity: ${alert.severity}`);
-                
-                if (alert.severity === 'high') {
-                    this.updateUI('threatLevel', 'HIGH');
-                    this.showHoneypotAlert();
-                }
-            }
-
-            activateHoneypot() {
-                this.mlModel.isHoneypotActive = true;
-                document.getElementById('honeypotAlert').style.display = 'block';
-                
-                // Start feeding decoy data
-                this.startHoneypotMode();
-                this.logEvent('🍯 HONEYPOT ACTIVATED - Feeding decoy data to potential attacker');
-                
-                // Simulate normal banking data but log all activities
-                setTimeout(() => {
-                    this.logEvent('🔍 Forensic tracing initiated');
-                    this.logEvent('📊 Collecting attacker behavioral patterns');
-                }, 2000);
-            }
-
-            startHoneypotMode() {
-                // Replace real data with synthetic data
-                const decoyData = {
-                    balance: "₹9,99,999.99",
-                    accountNumber: "****-****-9999",
-                    transactions: [
-                        "Decoy transaction 1 - ₹50,000",
-                        "Decoy transaction 2 - ₹25,000",
-                        "Decoy transaction 3 - ₹75,000"
-                    ]
-                };
-                
-                // Update interface with decoy data while logging real attacker behavior
-                this.feedDecoyData(decoyData);
-            }
-
-            feedDecoyData(decoyData) {
-                // This method feeds synthetic data to suspected attackers
-                // while continuing to monitor and log their behavior
-                console.log('🍯 Feeding decoy data:', decoyData);
-                
-                // Log every action the suspected attacker makes
-                this.enhancedLogging = true;
-                this.logEvent('🎭 Decoy interface activated - All actions now logged for forensics');
-            }
-
-            // Accessibility Features
-            enableAccessibilityMode() {
-                this.accessibilityMode.isEnabled = true;
-                this.adjustBehavioralThresholds('accessible');
-                this.logEvent('♿ Accessibility mode enabled - Adjusted behavioral thresholds');
-            }
-
-            adjustBehavioralThresholds(mode) {
-                switch(mode) {
-                    case 'elderly':
-                        this.userProfile.avgKeyInterval += 50; // Slower typing expected
-                        this.mlModel.anomalyThreshold += 0.1; // More lenient
-                        this.logEvent('👴 Elderly user mode - Increased tolerance for slower interactions');
-                        break;
-                    case 'disability':
-                        this.userProfile.mouseAcceleration *= 0.5; // Different mouse patterns
-                        this.mlModel.anomalyThreshold += 0.15;
-                        this.logEvent('♿ Disability mode - Adjusted for alternative input methods');
-                        break;
-                    case 'accessible':
-                        // General accessibility adjustments
-                        this.mlModel.anomalyThreshold += 0.05;
-                        this.logEvent('🔧 General accessibility adjustments applied');
-                        break;
-                }
-            }
-
-            // Duress Detection
-            triggerDuressAlert() {
-                this.logEvent('🚨 DURESS ALERT TRIGGERED - Silent alarm sent to authorities');
-                
-                // Send silent alert while appearing normal to attacker
-                this.sendSilentAlert({
-                    type: 'duress',
-                    location: 'estimated_user_location',
-                    timestamp: Date.now(),
-                    sessionId: this.getSessionId()
-                });
-                
-                // Continue normal operation to avoid suspicion
-                this.logEvent('🎭 Continuing normal operation to maintain attacker deception');
-            }
-
-            sendSilentAlert(alertData) {
-                // In real implementation, this would contact emergency services
-                console.log('Silent alert sent:', alertData);
-                this.logEvent('📡 Emergency services contacted discreetly');
-            }
-
-            // ML Model Functions
-            updateLSTMModel() {
-                // Simulate LSTM model processing
-                const sequenceData = this.sessionData.keystrokePatterns.slice(-50);
-                const prediction = this.processSequence(sequenceData);
-                
-                this.mlModel.confidence = prediction.confidence;
-                return prediction;
-            }
-
-            processSequence(sequence) {
-                // Simplified LSTM-like processing
-                if (sequence.length < 10) {
-                    return { confidence: 85, pattern: 'learning' };
-                }
-                
-                const patterns = this.extractPatterns(sequence);
-                const similarity = this.compareToUserProfile(patterns);
-                
-                return {
-                    confidence: similarity * 100,
-                    pattern: patterns.type,
-                    anomalyScore: 1 - similarity
-                };
-            }
-
-            extractPatterns(sequence) {
-                const intervals = [];
-                const dwellTimes = [];
-                
-                for (let i = 1; i < sequence.length; i++) {
-                    intervals.push(sequence[i].timestamp - sequence[i-1].timestamp);
-                    if (sequence[i].dwellTime) dwellTimes.push(sequence[i].dwellTime);
-                }
-                
-                return {
-                    type: 'keystroke_sequence',
-                    avgInterval: intervals.reduce((a, b) => a + b, 0) / intervals.length,
-                    intervalVariation: this.calculateStandardDeviation(intervals),
-                    avgDwellTime: dwellTimes.length > 0 ? dwellTimes.reduce((a, b) => a + b, 0) / dwellTimes.length : 0
-                };
-            }
-
-            compareToUserProfile(patterns) {
-                const intervalSimilarity = 1 - Math.min(1, Math.abs(patterns.avgInterval - this.userProfile.avgKeyInterval) / this.userProfile.avgKeyInterval);
-                const variationSimilarity = patterns.intervalVariation < 100 ? 0.9 : 0.3; // Threshold-based
-                
-                return (intervalSimilarity + variationSimilarity) / 2;
-            }
-
-            // Autoencoder Anomaly Detection
-            runAutoencoderAnalysis() {
-                const currentBehavior = this.getCurrentBehaviorVector();
-                const reconstructed = this.autoencode(currentBehavior);
-                const reconstructionError = this.calculateReconstructionError(currentBehavior, reconstructed);
-                
-                return {
-                    anomalyScore: Math.min(1, reconstructionError / 0.5), // Normalize
-                    isAnomalous: reconstructionError > this.mlModel.anomalyThreshold
-                };
-            }
-
-            getCurrentBehaviorVector() {
-                // Create behavior vector for autoencoder
-                return {
-                    avgKeystrokeInterval: this.getAverageKeystrokeInterval(),
-                    mouseVelocity: this.getAverageMouseVelocity(),
-                    clickFrequency: this.getClickFrequency(),
-                    scrollPattern: this.getScrollPattern(),
-                    navigationFlow: this.getNavigationFlow(),
-                    sessionDuration: (Date.now() - this.sessionData.startTime) / 1000
-                };
-            }
-
-            autoencode(behaviorVector) {
-                // Simplified autoencoder simulation
-                // In real implementation, this would use TensorFlow.js
-                const encoded = this.encode(behaviorVector);
-                const decoded = this.decode(encoded);
-                return decoded;
-            }
-
-            encode(input) {
-                // Simulate encoding to lower dimensional space
-                return {
-                    feature1: (input.avgKeystrokeInterval + input.mouseVelocity) / 2,
-                    feature2: (input.clickFrequency + input.scrollPattern) / 2,
-                    feature3: input.sessionDuration * 0.1
-                };
-            }
-
-            decode(encoded) {
-                // Simulate decoding back to original space
-                return {
-                    avgKeystrokeInterval: encoded.feature1 + (Math.random() - 0.5) * 20,
-                    mouseVelocity: encoded.feature1 + (Math.random() - 0.5) * 0.2,
-                    clickFrequency: encoded.feature2 + (Math.random() - 0.5) * 0.1,
-                    scrollPattern: encoded.feature2 + (Math.random() - 0.5) * 0.1,
-                    navigationFlow: 0.8 + (Math.random() - 0.5) * 0.2,
-                    sessionDuration: encoded.feature3 * 10
-                };
-            }
-
-            calculateReconstructionError(original, reconstructed) {
-                let error = 0;
-                const keys = Object.keys(original);
-                
-                keys.forEach(key => {
-                    const diff = Math.abs(original[key] - reconstructed[key]);
-                    error += diff * diff;
-                });
-                
-                return Math.sqrt(error / keys.length);
-            }
-
-            // Utility Functions
-            calculateStandardDeviation(values) {
-                const mean = values.reduce((a, b) => a + b, 0) / values.length;
-                const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
-                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
-                return Math.sqrt(variance);
-            }
-
-            calculateMouseJerkiness(movements) {
-                if (movements.length < 3) return 0;
-                
-                let jerkiness = 0;
-                for (let i = 2; i < movements.length; i++) {
-                    const acceleration1 = this.calculateMouseAcceleration();
-                    jerkiness += Math.abs(acceleration1);
-                }
-                
-                return jerkiness / (movements.length - 2);
-            }
-
-            analyzeNavigationPattern() {
-                // Analyze how user navigates through the interface
-                const expectedPaths = ['home', 'accounts', 'transfer', 'statements'];
-                const actualPath = this.getCurrentNavigationPath();
-                
-                let similarity = 0;
-                expectedPaths.forEach(path => {
-                    if (actualPath.includes(path)) similarity += 0.25;
-                });
-                
-                return 1 - similarity; // Return anomaly score (0 = normal, 1 = anomalous)
-            }
-
-            getCurrentNavigationPath() {
-                // Extract navigation path from session events
-                return this.sessionData.sessionEvents
-                    .filter(event => event.type === 'navigation')
-                    .map(event => event.data.target)
-                    .slice(-10); // Last 10 navigation events
-            }
-
-            getAverageKeystrokeInterval() {
-                if (this.sessionData.typingSpeed.length === 0) return this.userProfile.avgKeyInterval;
-                return this.sessionData.typingSpeed.reduce((a, b) => a + b, 0) / this.sessionData.typingSpeed.length;
-            }
-
-            getAverageMouseVelocity() {
-                if (this.sessionData.mouseMovements.length < 2) return 0;
-                
-                let totalVelocity = 0;
-                for (let i = 1; i < Math.min(this.sessionData.mouseMovements.length, 20); i++) {
-                    const current = this.sessionData.mouseMovements[i];
-                    const previous = this.sessionData.mouseMovements[i - 1];
-                    const distance = Math.sqrt(
-                        Math.pow(current.x - previous.x, 2) + 
-                        Math.pow(current.y - previous.y, 2)
-                    );
-                    const timeInterval = current.timestamp - previous.timestamp;
-                    totalVelocity += distance / timeInterval;
-                }
-                
-                return totalVelocity / Math.min(this.sessionData.mouseMovements.length - 1, 19);
-            }
-
-            getClickFrequency() {
-                const sessionDuration = (Date.now() - this.sessionData.startTime) / 1000;
-                return this.sessionData.clickPatterns.length / sessionDuration;
-            }
-
-            getScrollPattern() {
-                if (this.sessionData.scrollBehavior.length === 0) return 0.5;
-                
-                const avgScrollDelta = this.sessionData.scrollBehavior
-                    .map(scroll => Math.abs(scroll.deltaY))
-                    .reduce((a, b) => a + b, 0) / this.sessionData.scrollBehavior.length;
-                
-                return Math.min(1, avgScrollDelta / 100); // Normalize
-            }
-
-            getNavigationFlow() {
-                // Measure how smoothly user navigates
-                const navEvents = this.sessionData.sessionEvents.filter(e => e.type === 'navigation');
-                if (navEvents.length < 2) return 0.8; // Default for new sessions
-                
-                let smoothness = 0;
-                for (let i = 1; i < navEvents.length; i++) {
-                    const timeGap = navEvents[i].timestamp - navEvents[i-1].timestamp;
-                    if (timeGap > 1000 && timeGap < 10000) smoothness += 1; // Normal timing
-                }
-                
-                return smoothness / (navEvents.length - 1);
-            }
-
-            getLastTypingInterval() {
-                if (this.sessionData.typingSpeed.length === 0) return 0;
-                return this.sessionData.typingSpeed[this.sessionData.typingSpeed.length - 1];
-            }
-
-            calculateSeverity(type, data) {
-                switch(type) {
-                    case 'unusual_mouse_acceleration':
-                        return Math.abs(data) > 3 ? 'high' : 'medium';
-                    case 'unusual_click_pattern':
-                        return data.score > 0.6 ? 'high' : data.score > 0.3 ? 'medium' : 'low';
-                    case 'typing_anomaly':
-                        return data.deviation > 200 ? 'high' : 'medium';
-                    default:
-                        return 'low';
-                }
-            }
-
-            // UI Update Functions
-            updateUI(elementId, value) {
-                const element = document.getElementById(elementId);
-                if (!element) return;
-                
-                if (elementId.includes('metric-value')) {
-                    element.className = 'metric-value ' + this.getStatusClass(value);
-                }
-                element.textContent = value;
-            }
-
-            getStatusClass(value) {
-                if (typeof value === 'string') {
-                    if (value.includes('anomaly') || value.includes('high')) return 'anomaly';
-                    if (value.includes('suspicious') || value.includes('medium')) return 'suspicious';
-                }
-                return 'normal';
-            }
-
-            updateRiskLevel() {
-                const riskElement = document.getElementById('riskScore');
+            updateRiskIndicator(riskScore) {
                 const statusElement = document.getElementById('authStatus');
                 const textElement = document.getElementById('authText');
                 const threatElement = document.getElementById('threatLevel');
                 
-                if (this.mlModel.riskScore < 20) {
+                if (riskScore < 30) {
                     statusElement.className = 'status-indicator status-secure';
                     textElement.textContent = 'Secure Session';
                     threatElement.className = 'threat-level threat-low';
                     threatElement.innerHTML = '<span>🛡️</span><div><strong>Threat Level: LOW</strong><div><small>All systems normal</small></div></div>';
-                } else if (this.mlModel.riskScore < 60) {
+                } else if (riskScore < 70) {
                     statusElement.className = 'status-indicator status-warning';
                     textElement.textContent = 'Monitoring Session';
                     threatElement.className = 'threat-level threat-medium';
-                    threatElement.innerHTML = '<span>⚠️</span><div><strong>Threat Level: MEDIUM</strong><div><small>Increased monitoring active</small></div></div>';
+                    threatElement.innerHTML = '<span>⚠️</span><div><strong>Threat Level: MEDIUM</strong><div><small>Increased monitoring</small></div></div>';
                 } else {
                     statusElement.className = 'status-indicator status-danger';
                     textElement.textContent = 'High Risk Session';
                     threatElement.className = 'threat-level threat-high';
-                    threatElement.innerHTML = '<span>🚨</span><div><strong>Threat Level: HIGH</strong><div><small>Security measures activated</small></div></div>';
-                }
-                
-                riskElement.textContent = `Risk: ${Math.round(this.mlModel.riskScore)}%`;
-                
-                // Update AI confidence display
-                const confidenceElement = document.getElementById('aiConfidence');
-                if (confidenceElement) {
-                    confidenceElement.textContent = `${this.mlModel.confidence.toFixed(1)}%`;
-                    const progressFill = document.querySelector('.progress-fill');
-                    if (progressFill) {
-                        progressFill.style.width = `${this.mlModel.confidence}%`;
-                    }
+                    threatElement.innerHTML = '<span>🚨</span><div><strong>Threat Level: HIGH</strong><div><small>Security measures active</small></div></div>';
                 }
             }
 
-            showHoneypotAlert() {
-                const alert = document.getElementById('honeypotAlert');
-                alert.style.display = 'block';
+            updateConfidenceIndicator(confidence) {
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = `${confidence}%`;
+                }
+            }
+
+            handleHijackDetection(result) {
+                this.logEvent('🚨 HIJACK DETECTED - Activating protective measures');
                 
-                setTimeout(() => {
-                    alert.innerHTML = '🍯 Digital honeypot active - Collecting forensic data...';
+                // Show alert
+                const alert = document.getElementById('honeypotAlert');
+                if (alert) {
+                    alert.style.display = 'block';
+                    alert.innerHTML = '🚨 SECURITY ALERT: Session hijack detected. Protective measures activated.';
+                }
+                
+                // In real implementation, you would:
+                // - Lock certain functions
+                // - Send silent alert
+                // - Start honeypot mode
+                // - Log forensic data
+            }
+
+            startContinuousAnalysis() {
+                // Analyze every 3 seconds
+                this.analysisInterval = setInterval(() => {
+                    this.analyzeWithML();
                 }, 3000);
+                
+                this.logEvent('🔄 Continuous analysis started');
+            }
+
+            async endSession() {
+                if (!this.isActive) return;
+                
+                try {
+                    this.isActive = false;
+                    
+                    if (this.analysisInterval) {
+                        clearInterval(this.analysisInterval);
+                    }
+                    
+                    const response = await fetch(`${this.API_BASE}/session/end`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: this.sessionId })
+                    });
+                    
+                    if (response.ok) {
+                        const summary = await response.json();
+                        this.logEvent(`🏁 Session ended - Duration: ${Math.round(summary.duration)}s, Alerts: ${summary.alerts_count}`);
+                    }
+                } catch (error) {
+                    this.logEvent(`❌ Session end error: ${error.message}`);
+                }
+            }
+
+            fallbackMode() {
+                this.logEvent('⚠️ Running in fallback mode without ML backend');
+                this.isActive = true;
+                this.setupEventListeners();
+                
+                // Simple rule-based monitoring as fallback
+                setInterval(() => {
+                    const riskScore = this.calculateBasicRisk();
+                    this.updateRiskIndicator(riskScore);
+                    this.logEvent(`📊 Basic analysis - Risk: ${riskScore.toFixed(1)}%`);
+                }, 5000);
+            }
+
+            calculateBasicRisk() {
+                // Simple rule-based risk calculation
+                let risk = 0;
+                
+                if (this.currentMetrics.avgKeystrokeInterval < 50 || this.currentMetrics.avgKeystrokeInterval > 500) {
+                    risk += 30;
+                }
+                
+                if (this.currentMetrics.mouseVelocity > 5) {
+                    risk += 20;
+                }
+                
+                if (this.currentMetrics.clickFrequency > 2) {
+                    risk += 25;
+                }
+                
+                return Math.min(100, risk);
             }
 
             logEvent(message) {
                 const timestamp = new Date().toLocaleTimeString();
                 const logDisplay = document.getElementById('securityLogs');
                 
-                const newLog = `[${timestamp}] ${message}\n`;
-                logDisplay.textContent += newLog;
-                
-                // Keep only last 20 lines
-                const lines = logDisplay.textContent.split('\n');
-                if (lines.length > 20) {
-                    logDisplay.textContent = lines.slice(-20).join('\n');
-                }
-                
-                // Auto scroll to bottom
-                logDisplay.scrollTop = logDisplay.scrollHeight;
-            }
-
-            startSessionTimer() {
-                setInterval(() => {
-                    const duration = Date.now() - this.sessionData.startTime;
-                    const minutes = Math.floor(duration / 60000);
-                    const seconds = Math.floor((duration % 60000) / 1000);
-                    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (logDisplay) {
+                    const newLog = `[${timestamp}] ${message}\n`;
+                    logDisplay.textContent += newLog;
                     
-                    this.updateUI('sessionTime', timeString);
-                }, 1000);
-            }
-
-            beginBehavioralAnalysis() {
-                setInterval(() => {
-                    const behaviorVector = {
-                        avgKeystrokeInterval: this.getAverageKeystrokeInterval(),
-                        mouseVelocity: this.getAverageMouseVelocity(),
-                        clickFrequency: this.getClickFrequency(),
-                        scrollPattern: this.getScrollPattern(),
-                        navigationFlow: this.getNavigationFlow(),
-                        sessionDuration: (Date.now() - this.sessionData.startTime) / 1000
-                    };
-
-                    fetch('http://localhost:5000/analyze', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(behaviorVector)
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        // Replace simulated logic with real ML output
-                        this.mlModel.riskScore = data.risk_score;
-                        this.mlModel.confidence = data.confidence;
-                        this.updateRiskLevel();
-
-                        if (data.hijack_detected && !this.mlModel.isHoneypotActive) {
-                            this.activateHoneypot();
-                        }
-
-                        // Optional logging
-                        this.logEvent(
-                            `ML Analysis - Risk: ${Math.round(data.risk_score)}%, Confidence: ${Math.round(data.confidence)}%`
-                        );
-                    });
-
-                    // You can still do pattern analysis separately if you want
-                    this.performRealTimeAnalysis();
-                }, 5000);
-            }
-
-
-            getSessionId() {
-                return 'session_' + Date.now();
-            }
-
-            finalizeSession() {
-                this.logEvent('Session ending - Finalizing behavioral profile');
-                
-                // Save session data for future model training
-                const sessionSummary = {
-                    duration: Date.now() - this.sessionData.startTime,
-                    totalKeystrokes: this.sessionData.keystrokePatterns.length,
-                    totalMouseMovements: this.sessionData.mouseMovements.length,
-                    totalClicks: this.sessionData.clickPatterns.length,
-                    avgTypingSpeed: this.getAverageKeystrokeInterval(),
-                    riskScore: this.mlModel.riskScore,
-                    anomaliesDetected: this.sessionData.sessionEvents.length,
-                    honeypotActivated: this.mlModel.isHoneypotActive
-                };
-                
-                console.log('Session Summary:', sessionSummary);
-            }
-        }
-
-        // Global Functions for UI Interactions
-        let authSense;
-
-        function initializeAuthSense() {
-            authSense = new DesktopAuthSense();
-        }
-
-        function accessAccount() {
-            authSense.sessionData.sessionEvents.push({
-                type: 'navigation',
-                data: { target: 'account', action: 'view_balance' },
-                timestamp: Date.now()
-            });
-            authSense.logEvent('User accessed account balance');
-        }
-
-        function transferFunds() {
-            authSense.sessionData.sessionEvents.push({
-                type: 'navigation',
-                data: { target: 'transfer', action: 'initiate_transfer' },
-                timestamp: Date.now()
-            });
-            authSense.logEvent('User initiated fund transfer - High security action');
-            
-            // High-risk action - increase monitoring
-            authSense.mlModel.riskScore += 5;
-            authSense.updateRiskLevel();
-        }
-
-        function viewStatements() {
-            authSense.sessionData.sessionEvents.push({
-                type: 'navigation',
-                data: { target: 'statements', action: 'download' },
-                timestamp: Date.now()
-            });
-            authSense.logEvent('User requested account statements');
-        }
-
-        function payBills() {
-            authSense.sessionData.sessionEvents.push({
-                type: 'navigation',
-                data: { target: 'bills', action: 'pay_utility' },
-                timestamp: Date.now()
-            });
-            authSense.logEvent('User accessed bill payment');
-        }
-
-        function investments() {
-            authSense.sessionData.sessionEvents.push({
-                type: 'navigation',
-                data: { target: 'investments', action: 'view_portfolio' },
-                timestamp: Date.now()
-            });
-            authSense.logEvent('User viewed investment portfolio');
-        }
-
-        function loans() {
-            authSense.sessionData.sessionEvents.push({
-                type: 'navigation',
-                data: { target: 'loans', action: 'apply' },
-                timestamp: Date.now()
-            });
-            authSense.logEvent('User accessed loan application');
-        }
-
-        // Accessibility Functions
-        function toggleHighContrast() {
-            document.body.style.filter = document.body.style.filter ? '' : 'contrast(150%) brightness(120%)';
-            authSense.accessibilityMode.highContrast = !authSense.accessibilityMode.highContrast;
-            authSense.logEvent(`High contrast mode ${authSense.accessibilityMode.highContrast ? 'enabled' : 'disabled'}`);
-        }
-
-        function increaseFontSize() {
-            const currentSize = parseFloat(getComputedStyle(document.body).fontSize) || 16;
-            document.body.style.fontSize = (currentSize + 2) + 'px';
-            authSense.logEvent(`Font size increased to ${currentSize + 2}px`);
-        }
-
-        function decreaseFontSize() {
-            const currentSize = parseFloat(getComputedStyle(document.body).fontSize) || 16;
-            if (currentSize > 12) {
-                document.body.style.fontSize = (currentSize - 2) + 'px';
-                authSense.logEvent(`Font size decreased to ${currentSize - 2}px`);
-            }
-        }
-
-        function enableScreenReader() {
-            // Add ARIA labels and announce current focus
-            const elements = document.querySelectorAll('button, .service-card, input');
-            elements.forEach(el => {
-                if (!el.getAttribute('aria-label')) {
-                    el.setAttribute('aria-label', el.textContent || el.placeholder || 'Interactive element');
+                    // Keep only last 15 lines
+                    const lines = logDisplay.textContent.split('\n');
+                    if (lines.length > 15) {
+                        logDisplay.textContent = lines.slice(-15).join('\n');
+                    }
+                    
+                    logDisplay.scrollTop = logDisplay.scrollHeight;
                 }
-            });
-            authSense.logEvent('Screen reader support enhanced');
-        }
-
-        function simulateElderlyUser() {
-            authSense.adjustBehavioralThresholds('elderly');
-            authSense.accessibilityMode.elderlyMode = true;
-            document.body.style.fontSize = '18px';
-            authSense.logEvent('Elderly user simulation activated');
-        }
-
-        function simulateDisabilityMode() {
-            authSense.adjustBehavioralThresholds('disability');
-            authSense.accessibilityMode.disabilityMode = true;
-            authSense.logEvent('Disability accommodations activated');
-        }
-
-        function testDuressGesture() {
-            authSense.triggerDuressAlert();
-        }
-
-        // System Control Functions
-        function adjustSensitivity(level) {
-            switch(level) {
-                case 'low':
-                    authSense.mlModel.anomalyThreshold = 0.5;
-                    break;
-                case 'medium':
-                    authSense.mlModel.anomalyThreshold = 0.3;
-                    break;
-                case 'high':
-                    authSense.mlModel.anomalyThreshold = 0.1;
-                    break;
+                
+                console.log(`[AuthSense] ${message}`);
             }
-            authSense.logEvent(`Sensitivity adjusted to ${level.toUpperCase()}`);
         }
 
-        function updateThreshold(value) {
-            authSense.mlModel.anomalyThreshold = parseFloat(value);
-            document.getElementById('thresholdValue').textContent = value;
-            authSense.logEvent(`Anomaly threshold set to ${value}`);
-        }
-
-        function activateHoneypot() {
-            authSense.activateHoneypot();
-        }
-
-        function showHelp() {
-            alert(`🔒 AuthSense Desktop Behavioral Authentication
-
-Key Features:
-• Real-time keystroke analysis
-• Mouse behavior monitoring  
-• Accessibility support
-• Duress detection (Ctrl+Shift+D)
-• Honeypot protection
-• LSTM + Autoencoder ML models
-
-Accessibility:
-• High contrast mode
-• Font size adjustment
-• Screen reader support
-• Elderly/disability modes
-
-The system continuously monitors your behavior patterns to detect anomalies and potential security threats while maintaining your privacy and accessibility needs.`);
-        }
-
-        // Initialize the system when page loads
+        // Initialize when page loads
+        let authSenseML;
         document.addEventListener('DOMContentLoaded', function() {
-            initializeAuthSense();
+            authSenseML = new AuthSenseML();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (authSenseML) {
+                authSenseML.endSession();
+            }
         });
     </script>
 </body>
