@@ -122,6 +122,204 @@
       });
     });
 
+    let currentSessionId = `session_${Date.now()}`;
+    let userId = null;
+    let behaviorData = {
+      avgKeystrokeInterval: 150,
+      mouseVelocity: 0.5,
+      clickFrequency: 0.1,
+      scrollPattern: 0.5,
+      navigationFlow: 0.8,
+      sessionDuration: 0
+    };
+    let lastActivityTime = Date.now();
+    let behaviorAnalysisInterval;
+    
+    // Initialize silent behavioral monitoring
+    function initSilentBehaviorMonitoring() {
+      // Start session with backend
+      startSession();
+      
+      // Set up event listeners for behavior tracking
+      setupBehaviorTracking();
+      
+      // Start periodic behavior analysis (silent)
+      behaviorAnalysisInterval = setInterval(analyzeBehaviorSilently, 5000); // Analyze every 5 seconds
+      
+      // Track session duration
+      setInterval(() => {
+        behaviorData.sessionDuration = (Date.now() - lastActivityTime) / 1000;
+      }, 1000);
+    }
+    
+    // Start a new session with the backend (silent)
+    async function startSession() {
+      try {
+        const response = await fetch('http://localhost:5000/session/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: currentSessionId,
+            initial_behavior: behaviorData
+          })
+        });
+        
+        const data = await response.json();
+        userId = data.user_id;
+        console.log('Silent session monitoring started');
+      } catch (error) {
+        console.error('Error starting silent session:', error);
+      }
+    }
+    
+    // Set up event listeners for behavior tracking (unchanged)
+    function setupBehaviorTracking() {
+      let keyPressTimes = [];
+      let mouseMovements = [];
+      let clickCount = 0;
+      let scrollEvents = 0;
+      let lastMousePosition = null;
+      let lastMouseTime = Date.now();
+      
+      document.addEventListener('keydown', (e) => {
+        const now = Date.now();
+        keyPressTimes.push(now);
+        if (keyPressTimes.length > 10) keyPressTimes.shift();
+        
+        if (keyPressTimes.length > 1) {
+          const intervals = [];
+          for (let i = 1; i < keyPressTimes.length; i++) {
+            intervals.push(keyPressTimes[i] - keyPressTimes[i-1]);
+          }
+          behaviorData.avgKeystrokeInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        }
+        lastActivityTime = now;
+      });
+      
+      document.addEventListener('mousemove', (e) => {
+        const now = Date.now();
+        const timeDiff = now - lastMouseTime;
+        
+        if (lastMousePosition && timeDiff > 0) {
+          const distance = Math.sqrt(
+            Math.pow(e.clientX - lastMousePosition.x, 2) + 
+            Math.pow(e.clientY - lastMousePosition.y, 2)
+          );
+          const velocity = distance / timeDiff;
+          
+          mouseMovements.push(velocity);
+          if (mouseMovements.length > 20) mouseMovements.shift();
+          behaviorData.mouseVelocity = mouseMovements.reduce((a, b) => a + b, 0) / mouseMovements.length;
+        }
+        
+        lastMousePosition = { x: e.clientX, y: e.clientY };
+        lastMouseTime = now;
+        lastActivityTime = now;
+      });
+      
+      document.addEventListener('click', () => {
+        clickCount++;
+        lastActivityTime = Date.now();
+        setTimeout(() => {
+          behaviorData.clickFrequency = clickCount / 10;
+          clickCount = Math.max(0, clickCount - 1);
+        }, 10000);
+      });
+      
+      document.addEventListener('scroll', () => {
+        scrollEvents++;
+        lastActivityTime = Date.now();
+        setTimeout(() => {
+          behaviorData.scrollPattern = scrollEvents / 10;
+          scrollEvents = Math.max(0, scrollEvents - 1);
+        }, 10000);
+      });
+      
+      let lastTab = 'home';
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const newTab = tab.dataset.tab;
+          behaviorData.navigationFlow = newTab === lastTab ? 0.5 : 
+                                     (tabs.indexOf(newTab) === tabs.indexOf(lastTab) + 1) ? 1.0 : 0.0;
+          lastTab = newTab;
+          lastActivityTime = Date.now();
+        });
+      });
+    }
+    
+    // Silent behavior analysis (no UI updates)
+    async function analyzeBehaviorSilently() {
+      try {
+        const response = await fetch('http://localhost:5000/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: currentSessionId,
+            user_id: userId,
+            ...behaviorData
+          })
+        });
+        
+        const result = await response.json();
+        
+        // Silent handling of high-risk situations
+        if (result.hijack_detected && result.risk_score > 80) {
+          handleHighRiskSituation();
+        }
+        
+      } catch (error) {
+        console.error('Error in silent behavior analysis:', error);
+      }
+    }
+    
+    // Handle high-risk situations silently
+    function handleHighRiskSituation() {
+      // In a real implementation, you might:
+      // 1. Log the user out silently
+      // 2. Require re-authentication on next action
+      // 3. Notify security teams
+      // 4. Flag the session for review
+      
+      console.warn('High risk session detected - silent security measures activated');
+      
+      // Example: Force logout on next navigation
+      const originalLoadTab = loadTab;
+      loadTab = function(tab) {
+        window.location.href = '/logout?reason=suspicious_behavior';
+      };
+    }
+    
+    // Initialize silent monitoring when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      initSilentBehaviorMonitoring();
+      
+      // End session when user leaves
+      window.addEventListener('beforeunload', () => {
+        endSessionSilently();
+      });
+    });
+    
+    // End session silently
+    async function endSessionSilently() {
+      try {
+        await fetch('http://localhost:5000/session/end', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: currentSessionId
+          })
+        });
+      } catch (error) {
+        console.error('Error ending silent session:', error);
+      }
+    }
+
     function loadTab(tab) {
       let html = "";
       switch (tab) {
